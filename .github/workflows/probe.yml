@@ -1,24 +1,27 @@
 name: probe
 on: workflow_dispatch
+permissions:
+  contents: write
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: sapi
+      - uses: actions/checkout@v4
+      - name: collect
         run: |
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
-          curl -sS -m 30 -A "$UA" "https://sapi.craigslist.org/web/v8/postings/search/full?batch=16-0-360-0-0&cc=US&lang=en&searchPath=apa&max_price=1200&sort=date" -o /tmp/s.json -w "%{http_code} %{size_download}\n"
-          python3 - <<'P'
-          import json
-          d=json.load(open('/tmp/s.json'))['data']
-          print(list(d.keys()))
-          print(json.dumps(d['decode'])[:1500])
-          print(len(d['items']))
-          for it in d['items'][:4]: print(json.dumps(it,ensure_ascii=False)[:700])
-          print(json.dumps(d.get('areas'))[:300])
-          P
-      - name: detail
-        run: |
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
-          curl -sS -L -m 30 -A "$UA" "https://vancouver.craigslist.org/van/apa/" -o /tmp/d.html -w "%{http_code} %{size_download}\n"; head -c 200 /tmp/d.html
-          curl -sS -m 30 -A "$UA" "https://bbs.jpcanada.com/topics.php?bbs=3&msgid=266506&order=0&cat=&&dummy=0" -o /tmp/j.html -w "%{http_code} %{size_download}\n"
+          mkdir -p /tmp/p; UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          B="https://sapi.craigslist.org/web/v8/postings/search/full?batch=16-0-360-0-0&cc=US&lang=en&max_price=1200&sort=date"
+          curl -sS -m 30 -A "$UA" "$B&searchPath=apa&private_bath=1" -o /tmp/p/apa_pb.json -w "apa_pb %{http_code}\n"
+          curl -sS -m 30 -A "$UA" "$B&searchPath=roo&private_bath=1" -o /tmp/p/roo_pb.json -w "roo_pb %{http_code}\n"
+          curl -sS -m 30 -A "$UA" "$B&searchPath=roo" -o /tmp/p/roo.json -w "roo %{http_code}\n"
+          curl -sS -m 30 -A "$UA" "$B&searchPath=apa" -o /tmp/p/apa.json -w "apa %{http_code}\n"
+          curl -sS -m 30 -A "$UA" "$B&searchPath=sub&private_bath=1" -o /tmp/p/sub_pb.json -w "sub %{http_code}\n"
+          curl -sS -m 30 -A "$UA" "https://vancouver.craigslist.org/van/apa/d/vancouver-one-small-private-bedroom-in/13870239.html" -o /tmp/p/cl_detail.html -w "detail %{http_code}\n"
+          curl -sS -m 30 -A "$UA" "https://sapi.craigslist.org/web/v8/postings/13870239" -o /tmp/p/sapi_detail1.json -w "sd1 %{http_code}\n"
+          curl -sS -m 30 -A "$UA" "https://sapi.craigslist.org/web/v8/postings/search/full?batch=16-0-360-0-0&cc=US&lang=en&searchPath=apa&postingID=13870239" -o /tmp/p/sapi_detail2.json -w "sd2 %{http_code}\n"
+          curl -sS -m 40 -A "$UA" "https://bbs.jpcanada.com/listing.php?bbs=3&order=0" -o /tmp/p/jp_list.html -w "jp %{http_code}\n"
+          curl -sS -m 40 -A "$UA" "https://bbs.jpcanada.com/topics.php?bbs=3&msgid=266506&order=0&cat=&&dummy=0" -o /tmp/p/jp_d1.html
+          curl -sS -m 40 -A "$UA" "https://bbs.jpcanada.com/topics.php?bbs=3&msgid=266505&order=0&cat=&&dummy=0" -o /tmp/p/jp_d2.html
+          ls -la /tmp/p
+          git config user.name probe; git config user.email probe@x
+          git checkout -q --orphan probe-data; git rm -rfq . ; cp -r /tmp/p/* .; git add -A; git commit -qm probe; git push -f origin probe-data
