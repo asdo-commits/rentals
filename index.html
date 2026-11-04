@@ -941,9 +941,9 @@ select { font: inherit; font-size: 16px; min-height: 44px; width: 100%; backgrou
     <div class="group" id="g-src"><span class="lbl" data-i18n="source">Source</span></div>
     <label class="sortlabel"><span data-i18n="sortBy">Sort by</span>
       <select id="sort">
+        <option value="new" data-i18n="sort.new">Newest first</option>
         <option value="match" data-i18n="sort.match">Best match: apartments, downtown, then price</option>
         <option value="price" data-i18n="sort.price">Price, low to high</option>
-        <option value="new" data-i18n="sort.new">Newest first</option>
         <option value="avail" data-i18n="sort.avail">Availability, soonest first</option>
       </select>
     </label>
@@ -1159,7 +1159,7 @@ function iconSpan(cls, icon) {
   return sp;
 }
 
-var state = { kind: "all", stay: "all", src: "all", tier: {}, loc: {}, sort: "match" };
+var state = { kind: "all", stay: "all", src: "all", tier: {}, loc: {}, sort: "new" };
 
 var decisions = {};
 try {
@@ -1281,8 +1281,8 @@ document.getElementById("filterClose").addEventListener("click", closeFilters);
 document.getElementById("filterShow").addEventListener("click", closeFilters);
 document.getElementById("filterSheet").addEventListener("click", function (e) { if (e.target === this) closeFilters(); });
 document.getElementById("filterReset").addEventListener("click", function () {
-  state.kind = "all"; state.stay = "all"; state.src = "all"; state.tier = {}; state.loc = {}; state.sort = "match";
-  document.getElementById("sort").value = "match";
+  state.kind = "all"; state.stay = "all"; state.src = "all"; state.tier = {}; state.loc = {}; state.sort = "new";
+  document.getElementById("sort").value = "new";
   syncChips();
   render();
 });
