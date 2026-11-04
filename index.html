@@ -943,6 +943,7 @@ select { font: inherit; font-size: 16px; min-height: 44px; width: 100%; backgrou
       <select id="sort">
         <option value="match" data-i18n="sort.match">Best match: apartments, downtown, then price</option>
         <option value="price" data-i18n="sort.price">Price, low to high</option>
+        <option value="new" data-i18n="sort.new">Newest first</option>
         <option value="avail" data-i18n="sort.avail">Availability, soonest first</option>
       </select>
     </label>
@@ -1009,7 +1010,7 @@ var I18N = {
   en: {
     "filters": "Filters", "reset": "Reset", "close": "Close", "back": "Back",
     "loc": "Location", "price": "Price", "type": "Type", "stayLen": "Stay length", "source": "Source", "sortBy": "Sort by",
-    "sort.match": "Best match: apartments, downtown, then price", "sort.price": "Price, low to high", "sort.avail": "Availability, soonest first",
+    "sort.match": "Best match: apartments, downtown, then price", "sort.price": "Price, low to high", "sort.avail": "Availability, soonest first", "sort.new": "Newest first",
     "all": "All", "kindChip.apt": "Apartments and suites", "kindChip.room": "Rooms",
     "kind.apt": "Apartment or suite", "kind.room": "Room",
     "area.dt": "Downtown", "area.near": "Next to downtown", "area.other": "Elsewhere in Vancouver",
@@ -1036,7 +1037,7 @@ var I18N = {
   ja: {
     "filters": "フィルター", "reset": "リセット", "close": "閉じる", "back": "戻る",
     "loc": "エリア", "price": "家賃", "type": "タイプ", "stayLen": "滞在期間", "source": "掲載元", "sortBy": "並べ替え",
-    "sort.match": "おすすめ順(アパート、ダウンタウン、家賃の順)", "sort.price": "家賃が安い順", "sort.avail": "入居できる日が早い順",
+    "sort.match": "おすすめ順(アパート、ダウンタウン、家賃の順)", "sort.price": "家賃が安い順", "sort.avail": "入居できる日が早い順", "sort.new": "新着順",
     "all": "すべて", "kindChip.apt": "アパート・スイート", "kindChip.room": "個室",
     "kind.apt": "アパートまたはスイート", "kind.room": "個室",
     "area.dt": "ダウンタウン", "area.near": "ダウンタウンの隣", "area.other": "バンクーバー市内その他",
@@ -1675,6 +1676,7 @@ function render() {
     return !decisions[l.id] && l.live !== false && (state.kind === "all" || l.kind === state.kind) && (state.stay === "all" || l.stay === state.stay) && (!Object.keys(state.tier).length || state.tier[tier(l.price)]) && (!Object.keys(state.loc).length || state.loc[l.area]) && (state.src === "all" || l.src === state.src);
   });
   q.sort(function (a, b) {
+    if (state.sort === "new") return (a.listed < b.listed ? 1 : a.listed > b.listed ? -1 : 0) || (a.price - b.price);
     if (state.sort === "avail") return (a.availSort - b.availSort) || (a.price - b.price);
     if (state.sort === "match") return (rank(a) - rank(b)) || (a.price - b.price);
     return a.price - b.price;
