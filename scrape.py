@@ -26,7 +26,7 @@ PT = ZoneInfo("America/Vancouver")
 MAX_PRICE = 1200
 MIN_PRICE = 250
 KEEP_DAYS = 45
-REV = 2
+REV = 3
 MAX_NEW_PER_SOURCE = 40
 MAX_PHOTOS = 6
 DOWNTOWN = (49.2827, -123.1207)
@@ -220,9 +220,9 @@ def first_sentences(text, n=2, limit=200):
     return out[:limit].rstrip()
 
 
-def note_from(text):
+def note_from(text, roommates=False):
     t = re.sub(r"\s+", " ", text)
-    bits = []
+    bits = ["Lives with roommates."] if roommates else []
     for pat, label in [
         (r"(utilities|wifi|wi-fi|internet|hydro)[^.]{0,40}(included|incl)", "Utilities or internet included."),
         (r"no (pets?|smoking|smokers)", "No pets or smoking."),
@@ -233,7 +233,7 @@ def note_from(text):
     ]:
         if re.search(pat, t, re.I) and label not in bits:
             bits.append(label)
-    return " ".join(bits[:3])
+    return " ".join(bits[:4])
 
 
 APT_WORDS = re.compile(r"studio|\bsuite\b|1[- ]?bed(?:room)?\b|one[- ]bed|\bcondo\b|apartment|basement|\bloft\b|"
@@ -331,6 +331,7 @@ def cl_listing(r):
     if MALE_ONLY.search(text) and not FEMALE_ONLY.search(text):
         return None, "male only"
     ok, bath = bath_state(text)
+    bath_unclear = False
     kind = kind_of(title, body, r["path"], attrs.get("bedrooms"))
     if ok is False:
         return None, "shared bath"
@@ -340,7 +341,8 @@ def cl_listing(r):
         elif r["path"] in ("roo", "sub"):
             bath = "Private bathroom (listed as private)"
         else:
-            return None, "bath unclear"
+            bath = "Not stated, ask poster"
+            bath_unclear = True
     loc = item.get("location", {})
     lat, lon = loc.get("lat", r["lat"]), loc.get("lon", r["lon"])
     if not in_zone1(lat, lon):
@@ -359,14 +361,17 @@ def cl_listing(r):
     imgs = item.get("images") or r["imgs"]
     imgs = [i.split(":", 1)[1] if ":" in i else i for i in imgs][:MAX_PHOTOS]
     url = item.get("url") or "https://www.craigslist.org/view/d/%s" % r["uuid"]
-    return dict(
+    rec = dict(
         id="cl%d" % r["pid"], listed=iso_local(item.get("postedDate", r["posted"])), kind=kind,
         area=area_of(lat, lon), price=int(item.get("price") or r["price"]), title=title[:120], addr=addr[:120],
         bath=bath, avail=avail, availKnown=known, availSort=asort, stay=stay,
         stayNote=stay_note or "Not stated", src="Craigslist", url=url, posted="",
-        note=note_from(body), lat=lat, lng=lon, r=500,
+        note=note_from(body, roommates=(kind == "room" or bool(SHAREY.search(title)))), lat=lat, lng=lon, r=500,
         photo_src=["https://images.craigslist.org/%s_600x450.jpg" % i for i in imgs],
-    ), None
+    )
+    if bath_unclear:
+        rec["unclear"] = True
+    return rec, None
 
 
 # -------------------------------------------------------------------- JPCanada
@@ -473,12 +478,14 @@ def jp_listing(r):
     neg_title = bool(NEG_PLACE.search(title + " " + label_place))
     pos_body = bool(POS_PLACE.search(body))
     unclear = False
+    loc_unclear = False
     if neg_title and not pos_title:
         return None, "outside zone 1"
     if not (pos_title or pos_body):
         if NEG_PLACE.search(body):
             return None, "outside zone 1"
         unclear = True
+        loc_unclear = True
     ok, bath = bath_state(text)
     if ok is False:
         return None, "shared bath"
@@ -487,7 +494,8 @@ def jp_listing(r):
         if kind == "apt" and whole_unit_sure(title, body):
             bath = "Private (whole unit)"
         else:
-            return None, "bath unclear"
+            bath = "Not stated, ask poster"
+            unclear = True
     # centre point for the approximate circle
     lat, lon = 49.2600, -123.1100
     place_txt = None
@@ -514,16 +522,16 @@ def jp_listing(r):
     addr = label_place or "Vancouver"
     if place_txt:
         addr = "Near " + (place_txt.title() if place_txt.isascii() else place_txt)
-    if unclear:
+    if loc_unclear:
         addr = "Location not clear in the post"
     when = datetime.strptime(r["when"], "%Y-%m-%d %H:%M")
     rec = dict(
         id="jp%s" % r["mid"], listed=when.strftime("%Y-%m-%dT%H:%M"), kind=kind,
-        area=area_of(lat, lon) if not unclear else "other", price=price, title=title[:120], addr=addr[:120],
+        area=area_of(lat, lon) if not loc_unclear else "other", price=price, title=title[:120], addr=addr[:120],
         bath=bath, avail=avail, availKnown=known, availSort=asort, stay=stay,
         stayNote=stay_note or "Not stated", src="JPCanada",
         url=JP_BASE + "topics.php?bbs=3&msgid=%s" % r["mid"], posted="",
-        note=note_from(body), lat=lat, lng=lon, r=700, photo_src=photo_src,
+        note=note_from(body, roommates=(kind == "room")), lat=lat, lng=lon, r=700, photo_src=photo_src,
         ja=dict(title=title[:120]),
     )
     if unclear:
