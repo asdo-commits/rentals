@@ -31,6 +31,13 @@ MAX_PHOTOS = 6
 DOWNTOWN = (49.2827, -123.1207)
 
 NOW = datetime.now(PT)
+START = time.time()
+BUDGET = 420  # seconds; after this no new listings are fetched, the next scan continues
+
+
+def out_of_time():
+    return time.time() - START > BUDGET
+
 TODAY = NOW.date()
 
 
@@ -39,11 +46,12 @@ def log(*a):
 
 
 def get(url, binary=False, tries=2):
+    log("GET", url[:110])
     last = None
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "en"})
-            with urllib.request.urlopen(req, timeout=40) as r:
+            with urllib.request.urlopen(req, timeout=20) as r:
                 body = r.read()
             return body if binary else body.decode("utf-8", "replace")
         except Exception as e:  # noqa: BLE001
@@ -578,7 +586,8 @@ def main():
                 continue
             if lid in prev and prev[lid].get("skip"):
                 continue
-            if fresh >= MAX_NEW_PER_SOURCE:
+            if fresh >= MAX_NEW_PER_SOURCE or out_of_time():
+                log("stopping early:", "time budget" if out_of_time() else "per-source cap")
                 break
             fresh += 1
             try:
