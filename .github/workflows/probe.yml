@@ -4,9 +4,21 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: reach sites
+      - name: sapi
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
-          for u in "https://vancouver.craigslist.org/search/van/apa?max_price=1200&sort=date" "https://vancouver.craigslist.org/search/apa?format=rss" "https://bbs.jpcanada.com/listing.php?bbs=3&order=0" "https://sapi.craigslist.org/web/v8/postings/search/full?batch=9-0-360-0-0&cc=US&lang=en&searchPath=apa&max_price=1200"; do
-            echo "== $u"; curl -sS -m 30 -A "$UA" -o /tmp/o.html -w "%{http_code} %{size_download}\n" "$u"; head -c 300 /tmp/o.html | tr '\n' ' '; echo
-          done
+          curl -sS -m 30 -A "$UA" "https://sapi.craigslist.org/web/v8/postings/search/full?batch=16-0-360-0-0&cc=US&lang=en&searchPath=apa&max_price=1200&sort=date" -o /tmp/s.json -w "%{http_code} %{size_download}\n"
+          python3 - <<'P'
+          import json
+          d=json.load(open('/tmp/s.json'))['data']
+          print(list(d.keys()))
+          print(json.dumps(d['decode'])[:1500])
+          print(len(d['items']))
+          for it in d['items'][:4]: print(json.dumps(it,ensure_ascii=False)[:700])
+          print(json.dumps(d.get('areas'))[:300])
+          P
+      - name: detail
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          curl -sS -L -m 30 -A "$UA" "https://vancouver.craigslist.org/van/apa/" -o /tmp/d.html -w "%{http_code} %{size_download}\n"; head -c 200 /tmp/d.html
+          curl -sS -m 30 -A "$UA" "https://bbs.jpcanada.com/topics.php?bbs=3&msgid=266506&order=0&cat=&&dummy=0" -o /tmp/j.html -w "%{http_code} %{size_download}\n"
