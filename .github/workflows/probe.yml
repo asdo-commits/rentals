@@ -1,0 +1,12 @@
+name: probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: reach sites
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          for u in "https://vancouver.craigslist.org/search/van/apa?max_price=1200&sort=date" "https://vancouver.craigslist.org/search/apa?format=rss" "https://bbs.jpcanada.com/listing.php?bbs=3&order=0" "https://sapi.craigslist.org/web/v8/postings/search/full?batch=9-0-360-0-0&cc=US&lang=en&searchPath=apa&max_price=1200"; do
+            echo "== $u"; curl -sS -m 30 -A "$UA" -o /tmp/o.html -w "%{http_code} %{size_download}\n" "$u"; head -c 300 /tmp/o.html | tr '\n' ' '; echo
+          done
