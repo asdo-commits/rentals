@@ -731,6 +731,7 @@ button, select, .chip, .bubble { touch-action: manipulation; }
 .wrap { max-width: 480px; margin: 0 auto; padding: 0 16px calc(184px + env(safe-area-inset-bottom)); }
 h1 { font-size: 24px; line-height: 32px; font-weight: 500; margin: 0; text-wrap: balance; }
 h2 { font-size: 20px; line-height: 28px; font-weight: 500; margin: 0; }
+.asof { margin: -4px 0 12px; font-size: 13px; line-height: 20px; color: var(--muted); }
 .headrow { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 0 0 12px; }
 #count { font-size: 13px; line-height: 20px; color: var(--muted); white-space: nowrap; }
 
@@ -789,7 +790,7 @@ h2 { font-size: 20px; line-height: 28px; font-weight: 500; margin: 0; }
 .mapsec { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: grid; gap: 8px; }
 .subhead { margin: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--ink2); }
 .note { margin: 0; font-size: 13px; line-height: 20px; color: var(--muted); }
-.map { position: relative; z-index: 0; height: 240px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
+.map { position: relative; z-index: 0; height: 260px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
 .map.leaflet-container { background: var(--bg); font: inherit; }
 .leaflet-container a { color: var(--accent); }
 .leaflet-container .leaflet-control-attribution { font-size: 11px; line-height: 16px; }
@@ -879,6 +880,7 @@ select { font: inherit; font-size: 16px; min-height: 44px; width: 100%; backgrou
       <h1 id="greeting">Good evening</h1>
       <span id="count" aria-live="polite"></span>
     </div>
+    <p class="asof" id="asOf"></p>
     <div class="deck" id="deck"></div>
   </div>
 
@@ -959,16 +961,16 @@ var STAY = {
 };
 
 var LISTINGS = [
-  { id: "main", kind: "room", area: "other", price: 820, title: "Private furnished room with its own washroom", addr: "Near Main St, #3 bus (exact address not given)", bath: "Own washroom", avail: "Not stated, ask poster", availKnown: false, availSort: 9, stay: "unk", stayNote: "Not stated, poster asks how long you plan to stay", src: "JPCanada", url: "https://bbs.jpcanada.com/topics.php?bbs=3&msgid=266342", posted: "Posted Nov 1", note: "One load of laundry a week included. No guests, pets or smoking.", old: false },
-  { id: "joyce", kind: "room", area: "other", price: 830, title: "Furnished room with private bath, women only", addr: "Joyce-Collingwood, 5 min walk to Joyce Station", bath: "Private (shower, sink, toilet)", avail: "Nov, flexible", availKnown: true, availSort: 1, stay: "short", stayNote: "Minimum 4 to 5 months", src: "JPCanada", url: "https://bbs.jpcanada.com/topics.php?bbs=3&msgid=266436", posted: "Posted Nov 2", note: "Zone 1, 12 minutes to downtown. The room locks. A second room in the same house is $740 but shares a bath, so it is not shown.", old: false },
-  { id: "victoria", kind: "apt", area: "other", price: 1150, title: "1 bedroom basement suite, 377 sq ft", addr: "8433 Victoria Dr, near E Kent Ave", bath: "Private (whole unit)", avail: "Now", availKnown: true, availSort: 0, stay: "long", stayNote: "1 year minimum", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-compact-bedroom-basement-home/fTdx7CLhpsUroFkKUsJb6m", posted: "", note: "Utilities and internet are $150 extra. Laundry on site.", old: false },
-  { id: "micro", kind: "apt", area: "near", price: 1195, title: "Micro suite, 200 sq ft", addr: "Across from MacLean Park, Strathcona", bath: "Private (whole unit)", avail: "Now", availKnown: true, availSort: 0, stay: "unk", stayNote: "", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-micro-suite/iQyFD2ifgW8j6A1MDyseR5", posted: "", note: "Hot water included. One person only. No pets or smoking.", old: false },
-  { id: "reid", kind: "apt", area: "other", price: 1200, title: "Private studio, 400 sq ft", addr: "4XXX Reid St, near Rupert & E 29th", bath: "Private (whole unit)", avail: "Dec 1", availKnown: true, availSort: 3, stay: "unk", stayNote: "", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-private-studio-1bath-joyce/3XEovP3mkpNBpG8eueZo6R", posted: "", note: "Pets OK. Shared laundry and a private patio. Listed by ABC Realty.", old: false }
+  { id: "main", listed: "2026-11-01T12:32", kind: "room", area: "other", price: 820, title: "Private furnished room with its own washroom", addr: "Near Main St, #3 bus (exact address not given)", bath: "Own washroom", avail: "Availability not stated, ask poster", availKnown: false, availSort: 9, stay: "unk", stayNote: "Not stated, poster asks how long you plan to stay", src: "JPCanada", url: "https://bbs.jpcanada.com/topics.php?bbs=3&msgid=266342", posted: "Posted Nov 1", note: "One load of laundry a week included. No guests, pets or smoking.", old: false },
+  { id: "joyce", listed: "2026-11-02T19:16", kind: "room", area: "other", price: 830, title: "Furnished room with private bath, women only", addr: "Joyce-Collingwood, 5 min walk to Joyce Station", bath: "Private (shower, sink, toilet)", avail: "Available in November, flexible", availKnown: true, availSort: 1, stay: "short", stayNote: "Minimum 4 to 5 months", src: "JPCanada", url: "https://bbs.jpcanada.com/topics.php?bbs=3&msgid=266436", posted: "Posted Nov 2", note: "Zone 1, 12 minutes to downtown. The room locks. A second room in the same house is $740 but shares a bath, so it is not shown.", old: false },
+  { id: "victoria", listed: "2026-10-16T00:13", kind: "apt", area: "other", price: 1150, title: "1 bedroom basement suite, 377 sq ft", addr: "8433 Victoria Dr, near E Kent Ave", bath: "Private (whole unit)", avail: "Available now", availKnown: true, availSort: 0, stay: "long", stayNote: "1 year minimum", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-compact-bedroom-basement-home/fTdx7CLhpsUroFkKUsJb6m", posted: "", note: "Utilities and internet are $150 extra. Laundry on site.", old: false },
+  { id: "micro", listed: "2026-10-27T08:30", kind: "apt", area: "near", price: 1195, title: "Micro suite, 200 sq ft", addr: "Across from MacLean Park, Strathcona", bath: "Private (whole unit)", avail: "Available now", availKnown: true, availSort: 0, stay: "unk", stayNote: "", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-micro-suite/iQyFD2ifgW8j6A1MDyseR5", posted: "", note: "Hot water included. One person only. No pets or smoking.", old: false },
+  { id: "reid", listed: "2026-11-02T19:19", kind: "apt", area: "other", price: 1200, title: "Private studio, 400 sq ft", addr: "4XXX Reid St, near Rupert & E 29th", bath: "Private (whole unit)", avail: "Available Dec 1", availKnown: true, availSort: 3, stay: "unk", stayNote: "", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-private-studio-1bath-joyce/3XEovP3mkpNBpG8eueZo6R", posted: "", note: "Pets OK. Shared laundry and a private patio. Listed by ABC Realty.", old: false }
 ];
 
 var UNCLEAR = [
-  { id: "gastown1175", kind: "apt", area: "dt", price: 1175, title: "Gastown micro studio", addr: "Address not given, Gastown", bath: "Not clear. The post says shared washrooms, but the building has some private ones.", avail: "Now", availKnown: true, availSort: 0, stay: "unk", stayNote: "", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-gastown-micro-studio/gGw4HYUiHkpq9Q4h2DWvYx", posted: "Posted Oct 31", note: "Heritage building with fir floors and some exposed brick. Washrooms are single use and cleaned daily.", old: false },
-  { id: "gastown1029", kind: "apt", area: "dt", price: 1029, title: "Gastown micro studio", addr: "Address not given, Gastown", bath: "Not clear. The post says shared washrooms, but the building has some private ones.", avail: "Dec 1", availKnown: true, availSort: 3, stay: "unk", stayNote: "", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-gastown-micro-studio/9CSS8mYFnga5AiiSf2bMAd", posted: "Posted Nov 2", note: "Same building as the $1,175 unit. Washrooms are single use and cleaned daily.", old: false }
+  { id: "gastown1175", listed: "2026-10-31T10:49", kind: "apt", area: "dt", price: 1175, title: "Gastown micro studio", addr: "Address not given, Gastown", bath: "Not clear. The post says shared washrooms, but the building has some private ones.", avail: "Available now", availKnown: true, availSort: 0, stay: "unk", stayNote: "", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-gastown-micro-studio/gGw4HYUiHkpq9Q4h2DWvYx", posted: "Posted Oct 31", note: "Heritage building with fir floors and some exposed brick. Washrooms are single use and cleaned daily.", old: false },
+  { id: "gastown1029", listed: "2026-11-02T16:09", kind: "apt", area: "dt", price: 1029, title: "Gastown micro studio", addr: "Address not given, Gastown", bath: "Not clear. The post says shared washrooms, but the building has some private ones.", avail: "Available Dec 1", availKnown: true, availSort: 3, stay: "unk", stayNote: "", src: "Craigslist", url: "https://www.craigslist.org/view/d/vancouver-gastown-micro-studio/9CSS8mYFnga5AiiSf2bMAd", posted: "Posted Nov 2", note: "Same building as the $1,175 unit. Washrooms are single use and cleaned daily.", old: false }
 ];
 var ALL = LISTINGS.concat(UNCLEAR);
 UNCLEAR.forEach(function (l) { l.unclear = true; });
@@ -988,13 +990,13 @@ var LOCS = {
 
 
 var LJA = {
-  main: { title: "専用バスルーム付きの家具付き個室", addr: "メイン・ストリート付近、3番バス(詳しい住所の記載なし)", bath: "専用バスルーム", avail: "記載なし。投稿者に確認してください", stayNote: "記載なし。投稿者は滞在予定期間を尋ねています", note: "洗濯は週1回分が家賃に含まれます。ゲスト、ペット、喫煙は不可。", posted: "11月1日に投稿" },
-  joyce: { title: "専用バス付きの家具付き個室(女性限定)", addr: "ジョイス・コリングウッド、ジョイス駅から徒歩5分", bath: "専用(シャワー、洗面台、トイレ)", avail: "11月(調整可)", stayNote: "最低4〜5か月", note: "ゾーン1、ダウンタウンまで12分。部屋に鍵がかかります。同じ家にあるもう1部屋($740)はバスルームが共用のため、ここには表示していません。", posted: "11月2日に投稿" },
-  victoria: { title: "1ベッドルームのベースメントスイート、377平方フィート", addr: "ビクトリア・ドライブ8433番地、E ケント・アベニュー付近", bath: "専用(ユニット全体)", avail: "今すぐ", stayNote: "最低1年", note: "光熱費とインターネットは別途$150。敷地内にランドリーあり。" },
-  micro: { title: "マイクロスイート、200平方フィート", addr: "マクリーン・パークの向かい、ストラスコナ", bath: "専用(ユニット全体)", avail: "今すぐ", note: "給湯費込み。1人のみ。ペット、喫煙は不可。" },
-  reid: { title: "専用スタジオ、400平方フィート", addr: "リード・ストリート4XXX番地、ルパート通りとE 29番街付近", bath: "専用(ユニット全体)", avail: "12月1日", note: "ペット可。ランドリーは共用、専用パティオ付き。不動産会社ABC Realtyの掲載。" },
-  gastown1175: { title: "ガスタウンのマイクロスタジオ", addr: "住所の記載なし、ガスタウン", bath: "不明。投稿では共用バスルームとありますが、建物には専用バスルーム付きの部屋もあります。", avail: "今すぐ", note: "木の床と一部レンガの壁が残るヘリテージ建築。バスルームは1人用で、毎日清掃されます。", posted: "10月31日に投稿" },
-  gastown1029: { title: "ガスタウンのマイクロスタジオ", addr: "住所の記載なし、ガスタウン", bath: "不明。投稿では共用バスルームとありますが、建物には専用バスルーム付きの部屋もあります。", avail: "12月1日", note: "$1,175のユニットと同じ建物。バスルームは1人用で、毎日清掃されます。", posted: "11月2日に投稿" }
+  main: { title: "専用バスルーム付きの家具付き個室", addr: "メイン・ストリート付近、3番バス(詳しい住所の記載なし)", bath: "専用バスルーム", avail: "入居日の記載なし。投稿者に確認してください", stayNote: "記載なし。投稿者は滞在予定期間を尋ねています", note: "洗濯は週1回分が家賃に含まれます。ゲスト、ペット、喫煙は不可。", posted: "11月1日に投稿" },
+  joyce: { title: "専用バス付きの家具付き個室(女性限定)", addr: "ジョイス・コリングウッド、ジョイス駅から徒歩5分", bath: "専用(シャワー、洗面台、トイレ)", avail: "11月から入居可能(調整可)", stayNote: "最低4〜5か月", note: "ゾーン1、ダウンタウンまで12分。部屋に鍵がかかります。同じ家にあるもう1部屋($740)はバスルームが共用のため、ここには表示していません。", posted: "11月2日に投稿" },
+  victoria: { title: "1ベッドルームのベースメントスイート、377平方フィート", addr: "ビクトリア・ドライブ8433番地、E ケント・アベニュー付近", bath: "専用(ユニット全体)", avail: "今すぐ入居可能", stayNote: "最低1年", note: "光熱費とインターネットは別途$150。敷地内にランドリーあり。" },
+  micro: { title: "マイクロスイート、200平方フィート", addr: "マクリーン・パークの向かい、ストラスコナ", bath: "専用(ユニット全体)", avail: "今すぐ入居可能", note: "給湯費込み。1人のみ。ペット、喫煙は不可。" },
+  reid: { title: "専用スタジオ、400平方フィート", addr: "リード・ストリート4XXX番地、ルパート通りとE 29番街付近", bath: "専用(ユニット全体)", avail: "12月1日から入居可能", note: "ペット可。ランドリーは共用、専用パティオ付き。不動産会社ABC Realtyの掲載。" },
+  gastown1175: { title: "ガスタウンのマイクロスタジオ", addr: "住所の記載なし、ガスタウン", bath: "不明。投稿では共用バスルームとありますが、建物には専用バスルーム付きの部屋もあります。", avail: "今すぐ入居可能", note: "木の床と一部レンガの壁が残るヘリテージ建築。バスルームは1人用で、毎日清掃されます。", posted: "10月31日に投稿" },
+  gastown1029: { title: "ガスタウンのマイクロスタジオ", addr: "住所の記載なし、ガスタウン", bath: "不明。投稿では共用バスルームとありますが、建物には専用バスルーム付きの部屋もあります。", avail: "12月1日から入居可能", note: "$1,175のユニットと同じ建物。バスルームは1人用で、毎日清掃されます。", posted: "11月2日に投稿" }
 };
 
 var I18N = {
@@ -1016,13 +1018,14 @@ var I18N = {
     "removeSaved": "Remove from saved", "restore": "Restore", "saveInstead": "Save instead", "remove": "Remove",
     "stayLabel": "Stay: ", "openListing": "Open listing", "available": "Available: ",
     "mapTitle": "Approximate area", "mapFail": "The map tiles did not load here. The Google Maps link below still works.",
-    "mapNote": "The circle shows the general area, not the exact address.", "mapLink": "Open area in Google Maps",
+    "mapNote": "The circle and dot show the general area, not the exact address. Use + and - to zoom.", "mapLink": "Open area in Google Maps",
     "noPhotoListing": "No photo in the listing", "noPhoto": "No photo",
     "prevPhoto": "Previous photo", "nextPhoto": "Next photo", "photoOf": function (i, n, title) { return "Photo " + i + " of " + n + ": " + title; },
     "rowAria": function (title, price) { return "Open listing details: " + title + ", " + price; },
     "count": function (n) { return n + (n === 1 ? " listing to review" : " listings to review"); },
     "show": function (n) { return "Show " + n + (n === 1 ? " listing" : " listings"); },
-    "langBtn": "日本語", "langAria": "Switch to Japanese", "andUp": " and up"
+    "langBtn": "日本語", "langAria": "Switch to Japanese", "andUp": " and up",
+    "listedLabel": "Listed ", "asOf": function (when) { return "Listings as of " + when + " Pacific"; }
   },
   ja: {
     "filters": "フィルター", "reset": "リセット", "close": "閉じる", "back": "戻る",
@@ -1042,13 +1045,14 @@ var I18N = {
     "removeSaved": "保存を解除", "restore": "元に戻す", "saveInstead": "保存する", "remove": "解除",
     "stayLabel": "滞在: ", "openListing": "掲載ページを開く", "available": "入居可能: ",
     "mapTitle": "おおよその場所", "mapFail": "ここでは地図を読み込めませんでした。下のGoogleマップのリンクは使えます。",
-    "mapNote": "円はおおよそのエリアを示すもので、正確な住所ではありません。", "mapLink": "Googleマップでこのエリアを開く",
+    "mapNote": "円と点はおおよそのエリアを示すもので、正確な住所ではありません。+と-で拡大・縮小できます。", "mapLink": "Googleマップでこのエリアを開く",
     "noPhotoListing": "掲載に写真はありません", "noPhoto": "写真なし",
     "prevPhoto": "前の写真", "nextPhoto": "次の写真", "photoOf": function (i, n, title) { return "写真 " + i + "/" + n + ": " + title; },
     "rowAria": function (title, price) { return "物件の詳細を開く: " + title + "、" + price; },
     "count": function (n) { return "確認する物件 " + n + "件"; },
     "show": function (n) { return n + "件を表示"; },
-    "langBtn": "English", "langAria": "Switch to English", "andUp": "〜"
+    "langBtn": "English", "langAria": "Switch to English", "andUp": "〜",
+    "listedLabel": "掲載日時: ", "asOf": function (when) { return "掲載情報は" + when + "時点(太平洋時間)"; }
   }
 };
 var lang = "en";
@@ -1099,6 +1103,18 @@ function el(tag, cls, text) {
   if (text !== undefined) e.textContent = text;
   return e;
 }
+var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// Times are written as Pacific time and shown as written, with no conversion.
+function fmtListed(iso) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso || "");
+  if (!m) return "";
+  var mo = parseInt(m[2], 10), d = parseInt(m[3], 10), h = parseInt(m[4], 10), mi = m[5];
+  if (lang === "ja") return mo + "\u6708" + d + "\u65e5 " + h + ":" + mi;
+  var ap = h >= 12 ? "pm" : "am";
+  var h12 = h % 12 === 0 ? 12 : h % 12;
+  return MONTHS[mo - 1] + " " + d + ", " + h12 + ":" + mi + " " + ap;
+}
+var AS_OF = "2026-11-02T21:00";
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 var SVG = function (inner, size, fill) {
@@ -1116,7 +1132,8 @@ var ICONS = {
   pin: SVG('<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>', 24, false),
   calendar: SVG('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>', 24, false),
   clock: SVG('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 24, false),
-  drop: SVG('<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>', 24, false),
+  drop: SVG('<path d="M4 3v6a3 3 0 0 0 3 3h2"/><path d="M9 12a6 6 0 0 1 12 0H9z"/><path d="M12 15.5v2M15 15.5v3M18 15.5v2M13.5 20.5v1M16.5 21.5v1"/>', 24, false),
+  listed: SVG('<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>', 24, false),
   chevL: SVG('<path d="M15 5l-7 7 7 7"/>', 22, false),
   chevR: SVG('<path d="M9 5l7 7-7 7"/>', 22, false)
 };
@@ -1267,9 +1284,10 @@ function mountMap(mapEl, loc, failNote) {
   var map = null;
   try {
     var touch = L.Browser.mobile || ("ontouchstart" in window);
-    map = L.map(mapEl, { zoomControl: !touch, dragging: !touch, touchZoom: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false });
+    map = L.map(mapEl, { zoomControl: true, dragging: !touch, touchZoom: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, minZoom: 8, maxZoom: 17 });
     var center = L.latLng(loc.lat, loc.lng);
-    map.fitBounds(center.toBounds(loc.r * 2 + 160));
+    // Zoomed out so the whole Greater Vancouver area is in view. The + and - buttons zoom in and out.
+    map.setView(center, 11);
     var tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
@@ -1278,7 +1296,8 @@ function mountMap(mapEl, loc, failNote) {
     tiles.on("tileerror", function () { errors++; if (errors > 2) failNote.hidden = false; });
     tiles.on("tileload", function () { failNote.hidden = true; });
     var accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "").trim() || "#1f6b57";
-    L.circle(center, { radius: loc.r, color: accent, weight: 2, fillColor: accent, fillOpacity: 0.15 }).addTo(map);
+    L.circle(center, { radius: loc.r, color: accent, weight: 2, fillColor: accent, fillOpacity: 0.2 }).addTo(map);
+    L.circleMarker(center, { radius: 7, color: "#ffffff", weight: 2, fillColor: accent, fillOpacity: 1 }).addTo(map);
     return map;
   } catch (e) {
     failNote.hidden = false;
@@ -1381,12 +1400,12 @@ function vitalsEl(l) {
   var stayNote = LT(l, "stayNote");
   box.appendChild(vrow("clock", t("stayLabel") + t("stay." + l.stay) + (stayNote ? " · " + stayNote : "")));
   box.appendChild(vrow("drop", LT(l, "bath")));
+  box.appendChild(vrow("listed", t("listedLabel") + fmtListed(l.listed)));
   var note = LT(l, "note");
   if (note) box.appendChild(el("p", "vnote", note));
 
   var foot = el("div", "vfoot");
-  var posted = LT(l, "posted");
-  foot.appendChild(el("span", "", l.src + (posted ? " · " + posted : "")));
+  foot.appendChild(el("span", "", l.src));
   var a = el("a", "openlink", t("openListing"));
   a.href = l.url;
   a.target = "_blank";
@@ -1537,7 +1556,8 @@ function rowEl(l, mode) {
   tx.appendChild(el("div", "rp", fmt(l.price)));
   tx.appendChild(el("div", "rn", LT(l, "title")));
   tx.appendChild(el("div", "rm", LT(l, "addr")));
-  tx.appendChild(el("div", "rm", t("available") + LT(l, "avail")));
+  tx.appendChild(el("div", "rm", LT(l, "avail")));
+  tx.appendChild(el("div", "rm", t("listedLabel") + fmtListed(l.listed)));
   r.appendChild(tx);
   var acts = el("div", "acts");
   var btn = el("button", "linkbtn", mode === "yes" ? t("remove") : t("restore"));
@@ -1664,6 +1684,7 @@ document.getElementById("stampNo").innerHTML = ICONS.x;
 // Fill in every translatable label for the current language.
 function applyStatic() {
   document.documentElement.lang = lang;
+  document.getElementById("asOf").textContent = t("asOf", fmtListed(AS_OF));
   document.querySelectorAll("[data-i18n]").forEach(function (n) { n.textContent = t(n.getAttribute("data-i18n")); });
   chipRegistry.forEach(function (c) { c.b.textContent = t(c.labelKey); });
   [["btnNo", "x", "aria.no"], ["btnUndo", "undo", "aria.undo"], ["btnYes", "heart", "aria.yes"]].forEach(function (b) {
