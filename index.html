@@ -1672,7 +1672,7 @@ function setView(v) {
 
 function render() {
   var q = ALL.filter(function (l) {
-    return !decisions[l.id] && (state.kind === "all" || l.kind === state.kind) && (state.stay === "all" || l.stay === state.stay) && (!Object.keys(state.tier).length || state.tier[tier(l.price)]) && (!Object.keys(state.loc).length || state.loc[l.area]) && (state.src === "all" || l.src === state.src);
+    return !decisions[l.id] && l.live !== false && (state.kind === "all" || l.kind === state.kind) && (state.stay === "all" || l.stay === state.stay) && (!Object.keys(state.tier).length || state.tier[tier(l.price)]) && (!Object.keys(state.loc).length || state.loc[l.area]) && (state.src === "all" || l.src === state.src);
   });
   q.sort(function (a, b) {
     if (state.sort === "avail") return (a.availSort - b.availSort) || (a.price - b.price);
@@ -1763,6 +1763,58 @@ applyStatic();
 greet();
 syncChips();
 render();
+
+// Live data. A job on GitHub refreshes data.json every 2 hours. Opening the page picks up the latest scan.
+// If the file cannot be loaded (for example when this page is opened somewhere else), the built-in listings stay.
+var BASE_ALL = ALL.slice();
+var CACHE_KEY = "rental-cache-v1";
+function readCache() { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || "{}") || {}; } catch (e) { return {}; } }
+function adoptLive(data) {
+  var rows = (data.listings || []).filter(function (l) { return !l.skip && l.id; });
+  var seen = {};
+  var next = [];
+  rows.forEach(function (l) {
+    seen[l.id] = true;
+    l.old = false;
+    PHOTOS[l.id] = l.photos || [];
+    if (typeof l.lat === "number") LOCS[l.id] = { lat: l.lat, lng: l.lng, r: l.r || 500 };
+    if (l.ja) LJA[l.id] = l.ja;
+    next.push(l);
+  });
+  // Built-in listings from earlier versions stay only if you already saved, emailed or archived them.
+  BASE_ALL.forEach(function (l) {
+    if (!seen[l.id] && decisions[l.id]) { seen[l.id] = true; l.live = false; next.push(l); }
+  });
+  // Listings you decided on that dropped out of the file are restored from this phone's cache.
+  var cache = readCache();
+  Object.keys(cache).forEach(function (id) {
+    var c = cache[id];
+    if (seen[id] || !decisions[id] || !c || !c.l) return;
+    seen[id] = true;
+    c.l.live = false;
+    PHOTOS[id] = c.photos || [];
+    if (c.loc) LOCS[id] = c.loc;
+    if (c.ja) LJA[id] = c.ja;
+    next.push(c.l);
+  });
+  var keep = {};
+  next.forEach(function (l) {
+    if (decisions[l.id]) keep[l.id] = { l: l, photos: PHOTOS[l.id] || [], loc: LOCS[l.id] || null, ja: LJA[l.id] || null };
+  });
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(keep)); } catch (e) {}
+  ALL.length = 0;
+  next.forEach(function (l) { ALL.push(l); });
+  if (data.asOf) AS_OF = data.asOf;
+  applyStatic();
+  shownId = null;
+  render();
+}
+try {
+  fetch("data.json?v=" + Date.now(), { cache: "no-store" }).then(function (r) {
+    if (!r.ok) throw new Error("no data");
+    return r.json();
+  }).then(adoptLive).catch(function () {});
+} catch (e) {}
 
 </script>
 </body>
