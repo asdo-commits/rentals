@@ -1251,10 +1251,9 @@ chipGroup("g-stay", "stay", [
 chipGroup("g-src", "src", [
   { value: "all", label: "all" },
   { value: "Craigslist", label: "src.Craigslist" },
-  { value: "Facebook", label: "src.Facebook" },
   { value: "JPCanada", label: "src.JPCanada" }
 ], false);
-I18N.en["src.Craigslist"] = "Craigslist"; I18N.en["src.Facebook"] = "Facebook"; I18N.en["src.JPCanada"] = "JPCanada";
+I18N.en["src.Craigslist"] = "Craigslist"; I18N.en["src.JPCanada"] = "JPCanada";
 
 var bubbles = document.getElementById("bubbles");
 LOC_OPTIONS.forEach(function (o) { addChip(bubbles, "loc", o.value, o.label, true, "bubble"); });
