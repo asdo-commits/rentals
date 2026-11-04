@@ -889,6 +889,11 @@ select { font: inherit; font-size: 16px; min-height: 44px; width: 100%; backgrou
     <div class="list" id="savedList"></div>
   </div>
 
+  <div id="viewEmailed" hidden>
+    <div class="viewhead"><h2><span data-i18n="tab.emailed">Emailed</span> <span id="emailedCount"></span></h2><button type="button" class="langbtn" data-lang-toggle></button></div>
+    <div class="list" id="emailedList"></div>
+  </div>
+
   <div id="viewArchive" hidden>
     <div class="viewhead"><h2><span data-i18n="tab.archive">Archive</span> <span id="archiveCount"></span></h2><button type="button" class="langbtn" data-lang-toggle></button></div>
     <div class="list" id="archiveList"></div>
@@ -904,6 +909,7 @@ select { font: inherit; font-size: 16px; min-height: 44px; width: 100%; backgrou
 <nav class="tabbar" id="tabbar" aria-label="Sections">
   <button type="button" class="tab" id="tabDiscover" aria-current="page"><span class="ti" data-icon="layers"></span><span data-i18n="tab.discover">Discover</span></button>
   <button type="button" class="tab" id="tabSaved" aria-current="false"><span class="ti" data-icon="heartline"></span><span data-i18n="tab.saved">Saved</span><span class="tbadge" id="savedBadge" hidden></span></button>
+  <button type="button" class="tab" id="tabEmailed" aria-current="false"><span class="ti" data-icon="mail"></span><span data-i18n="tab.emailed">Emailed</span></button>
   <button type="button" class="tab" id="tabArchive" aria-current="false"><span class="ti" data-icon="archive"></span><span data-i18n="tab.archive">Archive</span></button>
 </nav>
 
@@ -1010,7 +1016,7 @@ var I18N = {
     "p.$": "Under $800", "p.$$": "$800 to $999", "p.$$$": "$1,000 to $1,200",
     "stayChip.long": "Long term (12+ mo)", "stayChip.mid": "Mid term (6 to 11 mo)", "stayChip.short": "Short term (under 6 mo)", "stayChip.unk": "Not stated",
     "stay.long": "Long term", "stay.mid": "Mid term", "stay.short": "Short term", "stay.unk": "Not stated",
-    "tab.discover": "Discover", "tab.saved": "Saved", "tab.archive": "Archive",
+    "tab.discover": "Discover", "tab.saved": "Saved", "tab.archive": "Archive", "tab.emailed": "Emailed", "empty.emailed": "Nothing emailed yet. Use the Emailed button on a saved listing.", "markEmailed": "Emailed", "backToSaved": "Back to saved", "markEmailedLong": "Move to emailed",
     "empty.saved": "Nothing saved yet.", "empty.archive": "Nothing archived yet.",
     "caughtUp": "You're all caught up. Your saved and archived listings are in the tabs below.",
     "noMatch": "No listings match these filters.",
@@ -1037,7 +1043,7 @@ var I18N = {
     "p.$": "$800未満", "p.$$": "$800〜$999", "p.$$$": "$1,000〜$1,200",
     "stayChip.long": "長期(12か月以上)", "stayChip.mid": "中期(6〜11か月)", "stayChip.short": "短期(6か月未満)", "stayChip.unk": "記載なし",
     "stay.long": "長期", "stay.mid": "中期", "stay.short": "短期", "stay.unk": "記載なし",
-    "tab.discover": "探す", "tab.saved": "保存済み", "tab.archive": "アーカイブ",
+    "tab.discover": "探す", "tab.saved": "保存済み", "tab.archive": "アーカイブ", "tab.emailed": "連絡済み", "empty.emailed": "連絡済みの物件はまだありません。保存した物件の「連絡済み」ボタンを使ってください。", "markEmailed": "連絡済み", "backToSaved": "保存に戻す", "markEmailedLong": "連絡済みに移動",
     "empty.saved": "保存した物件はまだありません。", "empty.archive": "アーカイブした物件はまだありません。",
     "caughtUp": "すべて確認しました。保存済みとアーカイブは下のタブにあります。",
     "noMatch": "条件に合う物件がありません。",
@@ -1126,6 +1132,7 @@ var ICONS = {
   undo: SVG('<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>', 22, false),
   heartline: SVG('<path d="M12 20.5l-1.2-1.1C6.1 15.2 3.5 12.8 3.5 9.6 3.5 7.1 5.4 5.2 7.9 5.2c1.4 0 2.8.7 3.6 1.8.8-1.1 2.2-1.8 3.6-1.8 2.5 0 4.4 1.9 4.4 4.4 0 3.2-2.6 5.6-7.3 9.8L12 20.5z"/>', 24, false),
   archive: SVG('<rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/>', 24, false),
+  mail: SVG('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>', 24, false),
   layers: SVG('<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>', 24, false),
   tag: SVG('<path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1.25"/>', 24, false),
   home: SVG('<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>', 24, false),
@@ -1560,16 +1567,21 @@ function rowEl(l, mode) {
   tx.appendChild(el("div", "rm", t("listedLabel") + fmtListed(l.listed)));
   r.appendChild(tx);
   var acts = el("div", "acts");
-  var btn = el("button", "linkbtn", mode === "yes" ? t("remove") : t("restore"));
-  btn.type = "button";
-  btn.addEventListener("click", function (e) {
-    e.stopPropagation();
-    delete decisions[l.id];
-    saveDecisions();
-    shownId = null;
-    render();
-  });
-  acts.appendChild(btn);
+  function rowBtn(label, val) {
+    var b = el("button", "linkbtn", label);
+    b.type = "button";
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (val) { decisions[l.id] = val; } else { delete decisions[l.id]; }
+      saveDecisions();
+      shownId = null;
+      render();
+    });
+    acts.appendChild(b);
+  }
+  if (mode === "yes") { rowBtn(t("markEmailed"), "mail"); rowBtn(t("remove"), null); }
+  else if (mode === "mail") { rowBtn(t("backToSaved"), "yes"); rowBtn(t("remove"), null); }
+  else { rowBtn(t("restore"), null); }
   r.appendChild(acts);
   r.addEventListener("click", function () { openDetail(l, mode); });
   r.addEventListener("keydown", function (e) {
@@ -1607,7 +1619,20 @@ function openDetail(l, mode) {
     var rm = el("button", "ctl wide", t("removeSaved"));
     rm.type = "button";
     rm.addEventListener("click", function () { leave(null); });
+    var em = el("button", "ctl wide fill", t("markEmailedLong"));
+    em.type = "button";
+    em.addEventListener("click", function () { leave("mail"); });
     acts.appendChild(rm);
+    acts.appendChild(em);
+  } else if (mode === "mail") {
+    var rm2 = el("button", "ctl wide", t("removeSaved"));
+    rm2.type = "button";
+    rm2.addEventListener("click", function () { leave(null); });
+    var bk = el("button", "ctl wide fill", t("backToSaved"));
+    bk.type = "button";
+    bk.addEventListener("click", function () { leave("yes"); });
+    acts.appendChild(rm2);
+    acts.appendChild(bk);
   } else {
     var rs = el("button", "ctl wide", t("restore"));
     rs.type = "button";
@@ -1637,7 +1662,7 @@ function closeDetail() {
 
 function setView(v) {
   view = v;
-  ["discover", "saved", "archive"].forEach(function (n) {
+  ["discover", "saved", "emailed", "archive"].forEach(function (n) {
     document.getElementById("view" + cap(n)).hidden = n !== v;
     document.getElementById("tab" + cap(n)).setAttribute("aria-current", n === v ? "page" : "false");
   });
@@ -1663,6 +1688,9 @@ function render() {
   var saved = ALL.filter(function (l) { return decisions[l.id] === "yes"; }).sort(function (a, b) { return a.price - b.price; });
   var archived = ALL.filter(function (l) { return decisions[l.id] === "no"; }).sort(function (a, b) { return a.price - b.price; });
   fillList("savedList", saved, "yes", t("empty.saved"));
+  var emailed = ALL.filter(function (l) { return decisions[l.id] === "mail"; }).sort(function (a, b) { return a.price - b.price; });
+  fillList("emailedList", emailed, "mail", t("empty.emailed"));
+  document.getElementById("emailedCount").textContent = emailed.length ? "(" + emailed.length + ")" : "";
   fillList("archiveList", archived, "no", t("empty.archive"));
   document.getElementById("savedCount").textContent = saved.length ? "(" + saved.length + ")" : "";
   document.getElementById("archiveCount").textContent = archived.length ? "(" + archived.length + ")" : "";
@@ -1718,6 +1746,7 @@ document.getElementById("btnUndo").addEventListener("click", undo);
 document.getElementById("detailBack").addEventListener("click", closeDetail);
 document.getElementById("tabDiscover").addEventListener("click", function () { setView("discover"); });
 document.getElementById("tabSaved").addEventListener("click", function () { setView("saved"); });
+document.getElementById("tabEmailed").addEventListener("click", function () { setView("emailed"); });
 document.getElementById("tabArchive").addEventListener("click", function () { setView("archive"); });
 
 document.addEventListener("keydown", function (e) {
