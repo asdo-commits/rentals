@@ -26,6 +26,7 @@ PT = ZoneInfo("America/Vancouver")
 MAX_PRICE = 1200
 MIN_PRICE = 250
 KEEP_DAYS = 45
+REV = 2
 MAX_NEW_PER_SOURCE = 40
 MAX_PHOTOS = 6
 DOWNTOWN = (49.2827, -123.1207)
@@ -242,20 +243,30 @@ ROOM_WORDS = re.compile(r"\broom\b|roommate|room ?mate|shared house|sharehouse|h
                         r"シェアハウス|ホームステイ|お部屋|部屋", re.I)
 
 
+WHOLE = re.compile(r"studio|\bsuite\b|\b1[- ]?bed(?:room)?s?\b|one[- ]bed|\b[1-3][- ]?br\b|\bbachelor\b|micro|laneway|\bcondo\b|"
+                   r"apartment|\bloft\b|basement|house for rent|\bunit\b|\u30b9\u30bf\u30b8\u30aa|\u30a2\u30d1\u30fc\u30c8|"
+                   r"\u30b3\u30f3\u30c9\u30df\u30cb\u30a2\u30e0|\u30ef\u30f3\u30d9\u30c3\u30c9|1\u30d9\u30c3\u30c9|\u30d9\u30fc\u30b9\u30e1\u30f3\u30c8", re.I)
+SHAREY = re.compile(r"\bshar(?:e|ed|ing)\b|roommates?|room ?mates?|looking for \d|per (?:person|room)|\brooms? (?:for rent|available|share)|"
+                    r"\bprivate r(?:oo)?m\b|bedroom (?:available|for rent)|single room|master (?:bed)?room|homestay|\bone bed ?room for rent|"
+                    r"\u30b7\u30a7\u30a2|\u500b\u5ba4|\u30eb\u30fc\u30e0\u30e1\u30a4\u30c8|\u30db\u30fc\u30e0\u30b9\u30c6\u30a4", re.I)
+
+
 def kind_of(title, body, category, bedrooms=None):
     t = title or ""
     if category == "roo":
         return "room"
-    if re.search(r"\b(room|rooms|roommate)\b.*\b(rent|available|for)\b|private room|shared (house|home)|master bedroom|bedroom (available|for rent)|"
-                 r"個室|ルームメイト|シェア", t, re.I) and not re.search(r"studio|suite|apartment|condo", t, re.I):
+    if SHAREY.search(t):
         return "room"
-    if APT_WORDS.search(t):
+    if WHOLE.search(t):
         return "apt"
-    if ROOM_WORDS.search(t):
+    if re.search(r"\b(room|rm|bedroom)\b|\u304a\u90e8\u5c4b|\u90e8\u5c4b", t, re.I):
         return "room"
-    if APT_WORDS.search(body[:400]):
-        return "apt"
-    return "apt" if category in ("apa", "sub") else "room"
+    return "room"
+
+
+def whole_unit_sure(title, body):
+    """True only when the post clearly offers a whole place, not a room in a shared home."""
+    return bool(WHOLE.search(title)) and not SHAREY.search(title) and not SHAREY.search(body[:400])
 
 
 # ------------------------------------------------------------------ Craigslist
@@ -324,7 +335,7 @@ def cl_listing(r):
     if ok is False:
         return None, "shared bath"
     if ok is None:
-        if kind == "apt" and r["path"] != "roo":
+        if kind == "apt" and r["path"] != "roo" and whole_unit_sure(title, body):
             bath = "Private (whole unit)"
         elif r["path"] in ("roo", "sub"):
             bath = "Private bathroom (listed as private)"
@@ -473,7 +484,7 @@ def jp_listing(r):
         return None, "shared bath"
     kind = kind_of(title, body, "jp")
     if ok is None:
-        if kind == "apt":
+        if kind == "apt" and whole_unit_sure(title, body):
             bath = "Private (whole unit)"
         else:
             return None, "bath unclear"
@@ -566,6 +577,8 @@ def main():
     try:
         with open(DATA, encoding="utf-8") as f:
             for l in json.load(f).get("listings", []):
+                if l.get("rev") != REV:
+                    continue  # made by an older version of the rules, look at it again
                 prev[l["id"]] = l
     except Exception:  # noqa: BLE001
         pass
@@ -597,14 +610,15 @@ def main():
                 continue
             time.sleep(0.4)
             if rec is None:
-                skipped[lid] = dict(id=lid, skip=True, why=why, seen=NOW.strftime("%Y-%m-%d"))
+                skipped[lid] = dict(id=lid, skip=True, why=why, seen=NOW.strftime("%Y-%m-%d"), rev=REV)
                 log("skip", lid, why)
                 continue
             key = dupe_key(rec)
             if any(dupe_key(o) == key for o in list(prev.values()) + list(new_recs.values()) if not o.get("skip")):
-                skipped[lid] = dict(id=lid, skip=True, why="duplicate", seen=NOW.strftime("%Y-%m-%d"))
+                skipped[lid] = dict(id=lid, skip=True, why="duplicate", seen=NOW.strftime("%Y-%m-%d"), rev=REV)
                 log("skip", lid, "duplicate")
                 continue
+            rec["rev"] = REV
             rec["photos"] = save_photos(rec)
             rec.pop("photo_src", None)
             new_recs[lid] = rec
